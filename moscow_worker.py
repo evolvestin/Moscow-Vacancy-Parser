@@ -472,6 +472,8 @@ def hh_quest(pub_link):
         if search_currency:
             if search_currency.group(1) == 'eur':
                 money_array.append(' евро.')
+            elif search_currency.group(1) == 'usd':
+                money_array.append(' долларов.')
             else:
                 money_array.append(' бел. руб.')
         else:
@@ -572,6 +574,8 @@ def former(growing, pub_link, background_coefficient):
                 money += u' \u20AC '
             elif growing['money'][2] == ' бел. руб.':
                 money += ' бел. руб. '
+            elif growing['money'][2] == ' долларов.':
+                money += u' \u0024 '
             else:
                 money += u' \u20BD '
         growing['tag_picture'] = image(re.sub('[—\s-]', ' ', text_to_image.strip()), money, background_coefficient)
