@@ -458,7 +458,7 @@ def hh_quest(pub_link):
     if money is not None:
         money_array = []
         money = re.sub('\s', '', money.get_text().lower())
-        search_currency = re.search('(eur|бел\.)', money)
+        search_currency = re.search('(usd|eur|бел\.)', money)
         search_ot = re.search('от(\d+)', money)
         search_do = re.search('до(\d+)', money)
         if search_do:
