@@ -102,10 +102,10 @@ used_array = google('moscow-growing', 'col_values', 1)
 start_search = query('https://t.me/UsefullCWLinks/' + str(docs.start_link), 'd: (.*) :d')
 if start_search:
     last_date = stamper(start_search.group(1)) - 3 * 60 * 60
-    start_message('moscow-worker', stamp1)
+    start_message(os.environ['TOKEN'], stamp1)
 else:
     last_date = '\nОшибка с нахождением номера поста. ' + bold('Бот выключен')
-    start_message('moscow-worker', stamp1, last_date)
+    start_message(os.environ['TOKEN'], stamp1, last_date)
     _thread.exit()
 # ====================================================================================
 
