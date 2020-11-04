@@ -1,3 +1,4 @@
+import os
 import re
 import random
 import _thread
@@ -10,14 +11,12 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from docs import moscow_vars as docs
 from PIL import Image, ImageFont, ImageDraw
-from additional.objects import thread_exec as executive
-from oauth2client.service_account import ServiceAccountCredentials
-from additional.objects import bold, code, under, query, \
-    italic, printer, stamper, log_time, start_message, start_main_bot
+from objects import thread_exec as executive
+from objects import bold, code, under, query, italic, printer, stamper, \
+    log_time, start_message, start_main_bot, environmental_files
 
 stamp1 = int(datetime.now().timestamp())
 allowed_head_elements = ['условия', 'требования']
-scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 starting = ['title', 'place', 'tags', 'geo', 'money', 'org_name', 'schedule', 'employment', 'short_place',
             'experience', 'education', 'contact', 'numbers', 'description', 'email', 'metro', 'tag_picture']
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36'
@@ -39,36 +38,33 @@ e_post = '✉'
 idMe = 396978030
 idMain = docs.idMain
 idDocs = docs.idDocs
+environmental_files()
+data5, client5 = None, None
 idInstagram = docs.idInstagram
 allowed_persons = [idMe, 470292601, 457209276, 574555477]
 # =================================================================
 
 
 def google(sheet, action, option):
-    global creds5
-    global client5
-    global data5
+    global data5, client5
     try:
         data5 = client5.open('scheduled').worksheet(sheet)
     except IndexError and Exception:
-        creds5 = ServiceAccountCredentials.from_json_keyfile_name('person5.json', scope)
-        client5 = gspread.authorize(creds5)
+        client5 = gspread.service_account('person5.json')
         data5 = client5.open('scheduled').worksheet(sheet)
 
     if action == 'col_values':
         try:
             values = data5.col_values(option)
         except IndexError and Exception:
-            creds5 = ServiceAccountCredentials.from_json_keyfile_name('person5.json', scope)
-            client5 = gspread.authorize(creds5)
+            client5 = gspread.service_account('person5.json')
             data5 = client5.open('scheduled').worksheet(sheet)
             values = data5.col_values(option)
     elif action == 'insert':
         try:
             values = data5.insert_row([option], 1)
         except IndexError and Exception:
-            creds5 = ServiceAccountCredentials.from_json_keyfile_name('person5.json', scope)
-            client5 = gspread.authorize(creds5)
+            client5 = gspread.service_account('person5.json')
             data5 = client5.open('scheduled').worksheet(sheet)
             values = data5.insert_row([option], 1)
         sleep(2)
@@ -76,8 +72,7 @@ def google(sheet, action, option):
         try:
             values = data5.append_row(option)
         except IndexError and Exception:
-            creds5 = ServiceAccountCredentials.from_json_keyfile_name('person5.json', scope)
-            client5 = gspread.authorize(creds5)
+            client5 = gspread.service_account('person5.json')
             data5 = client5.open('scheduled').worksheet(sheet)
             values = data5.append_row(option)
         sleep(2)
@@ -85,8 +80,7 @@ def google(sheet, action, option):
         try:
             values = data5.delete_row(option)
         except IndexError and Exception:
-            creds5 = ServiceAccountCredentials.from_json_keyfile_name('person5.json', scope)
-            client5 = gspread.authorize(creds5)
+            client5 = gspread.service_account('person5.json')
             data5 = client5.open('scheduled').worksheet(sheet)
             try:
                 values = data5.delete_row(option)
@@ -103,7 +97,7 @@ def google(sheet, action, option):
     return values
 
 
-bot = start_main_bot('non-sync', docs.tkn)
+bot = start_main_bot('non-sync', os.environ['TOKEN'])
 used_array = google('moscow-growing', 'col_values', 1)
 start_search = query('https://t.me/UsefullCWLinks/' + str(docs.start_link), 'd: (.*) :d')
 if start_search:
@@ -256,7 +250,7 @@ def image(image_text, image_text_price, background_coefficient):
         drop_text = ''
         layer_array = []
         full_height = 0
-        temp_text_array = re.sub('\s+', ' ', image_text.strip()).split(' ')
+        temp_text_array = re.sub(r'\s+', ' ', image_text.strip()).split(' ')
         for i in range(0, len(temp_text_array)):
             if width(None, temp_text_array[i], 'bold', 70) <= original_width:
                 if width(None, (drop_text + ' ' + temp_text_array[i]).strip(), 'bold', 70) <= original_width:
@@ -309,7 +303,7 @@ def instagram_image(text_array, background_coefficient):
                 if width(array[0], array[1], 'regular', more_font) + emoji_factor <= original_width:
                     layer_array.append(array)
                 else:
-                    temp_text_array = re.sub('\s+', ' ', array[1]).split(' ')
+                    temp_text_array = re.sub(r'\s+', ' ', array[1]).split(' ')
                     array = [array[0]]
                     drop_text = ''
                     for i in range(0, len(temp_text_array)):
@@ -411,12 +405,12 @@ def hh_quest(pub_link):
     if title is not None:
         if title.find('h1') is not None:
             tag = ''
-            headline = re.sub('\s+', ' ', title.find('h1').get_text())
+            headline = re.sub(r'\s+', ' ', title.find('h1').get_text())
             growing['title'] = headline
             headline = re.sub('/', ' / ', headline)
-            headline = re.sub('\(.*?\)|[+.,/]|г\.', '', headline.lower())
-            headline = re.sub('e-mail', 'email', re.sub('\s+', ' ', headline))
-            headline = re.sub('[\s-]', '_', headline.strip().capitalize())
+            headline = re.sub(r'\(.*?\)|[+.,/]|г\.', '', headline.lower())
+            headline = re.sub('e-mail', 'email', re.sub(r'\s+', ' ', headline))
+            headline = re.sub(r'[\s-]', '_', headline.strip().capitalize())
             headline = re.sub('_+', '_', headline)
             for i in re.split('(_)', headline):
                 if len(tag) <= 20:
@@ -430,10 +424,10 @@ def hh_quest(pub_link):
         metro = ''
         metro_array = place.find_all('span', class_='metro-station')
         for i in metro_array:
-            metro += re.sub('\s+', ' ', i.get_text().strip() + ', ')
+            metro += re.sub(r'\s+', ' ', i.get_text().strip() + ', ')
         if metro != '':
             growing['metro'] = metro[:-2]
-        growing['place'] = re.sub(metro, '', re.sub('\s+', ' ', place.get_text()).strip())
+        growing['place'] = re.sub(metro, '', re.sub(r'\s+', ' ', place.get_text()).strip())
 
     short_place = soup.find_all('span')
     if short_place is not None:
@@ -441,26 +435,26 @@ def hh_quest(pub_link):
             if str(i).find('vacancy-view-raw-address') != -1:
                 search = re.search('<!-- -->(.*?)<!-- -->', str(i))
                 if search:
-                    growing['short_place'] = re.sub('\s+', ' ', search.group(1).capitalize().strip())
+                    growing['short_place'] = re.sub(r'\s+', ' ', search.group(1).capitalize().strip())
                     break
         if growing['short_place'] == 'none':
             short_place = soup.find('div', class_='vacancy-company')
             if short_place is not None:
                 short_place = short_place.find('p')
                 if short_place is not None:
-                    growing['short_place'] = re.sub('\s+', ' ', short_place.get_text().capitalize().strip())
+                    growing['short_place'] = re.sub(r'\s+', ' ', short_place.get_text().capitalize().strip())
 
     geo_search = re.search('{"lat": (.*?), "lng": (.*?), "zoom"', str(soup))
     if geo_search:
-        growing['geo'] = re.sub('\s', '', geo_search.group(1)) + ',' + re.sub('\s', '', geo_search.group(2))
+        growing['geo'] = re.sub(r'\s', '', geo_search.group(1)) + ',' + re.sub(r'\s', '', geo_search.group(2))
 
     money = soup.find('p', class_='vacancy-salary')
     if money is not None:
         money_array = []
-        money = re.sub('\s', '', money.get_text().lower())
-        search_currency = re.search('(usd|eur|бел\.)', money)
-        search_ot = re.search('от(\d+)', money)
-        search_do = re.search('до(\d+)', money)
+        money = re.sub(r'\s', '', money.get_text().lower())
+        search_currency = re.search(r'(usd|eur|бел\.)', money)
+        search_ot = re.search(r'от(\d+)', money)
+        search_do = re.search(r'до(\d+)', money)
         if search_do:
             money_array.append(search_do.group(1))
             money_array.append('none')
@@ -482,7 +476,7 @@ def hh_quest(pub_link):
 
     org_name = soup.find('a', {'data-qa': 'vacancy-company-name'})
     if org_name is not None:
-        growing['org_name'] = re.sub('\s+', ' ', org_name.get_text().strip())
+        growing['org_name'] = re.sub(r'\s+', ' ', org_name.get_text().strip())
 
     description = soup.find('div', class_='g-user-content')
     if description is not None:
@@ -500,20 +494,20 @@ def hh_quest(pub_link):
                             text += '🔹 '
                             list_element = re.sub(',', ', ', list_element)
                             list_element = re.sub('<', '&#60;', list_element)
-                            list_element = re.sub('\s+', ' ', list_element).strip()
-                            list_element = re.sub('\s*?,\s*?', ',', list_element)
-                            list_element = re.sub('\s*?;\s*?', ';', list_element)
-                            list_element = re.sub('\s*?\.\s*?', '.', list_element)
+                            list_element = re.sub(r'\s+', ' ', list_element).strip()
+                            list_element = re.sub(r'\s*?,\s*?', ',', list_element)
+                            list_element = re.sub(r'\s*?;\s*?', ';', list_element)
+                            list_element = re.sub(r'\s*?\.\s*?', '.', list_element)
                             list_element = list_element[:1].capitalize() + list_element[1:]
                             if list_element.endswith(';') is False:
                                 list_element += ';'
                             if list_element not in memory:
                                 text += list_element + '\n'
                                 memory.append(list_element)
-                    text = re.sub('\.+', '.', text[:-2] + '.\n')
+                    text = re.sub(r'\.+', '.', text[:-2] + '.\n')
             else:
-                head_element = re.sub('\s', '_', i.get_text()).lower()
-                head_element = re.sub('\W', '', head_element)
+                head_element = re.sub(r'\s', '_', i.get_text()).lower()
+                head_element = re.sub(r'\W', '', head_element)
                 head_element = re.sub('_+', ' ', head_element)
                 head_element = re.sub('<', '&#60;', head_element)
                 if head_element in allowed_head_elements and head_element not in memory:
@@ -530,28 +524,28 @@ def hh_quest(pub_link):
             schedule_text = ''
             schedule = i.find('span')
             if schedule is not None:
-                schedule_text = re.sub('\s+', ' ', schedule.get_text().strip())
+                schedule_text = re.sub(r'\s+', ' ', schedule.get_text().strip())
                 growing['schedule'] = re.sub('график', '', schedule_text).strip().capitalize()
-            employment = re.sub('\s+', ' ', i.get_text().lower())
+            employment = re.sub(r'\s+', ' ', i.get_text().lower())
             employment = re.sub(',|занятость|' + schedule_text, '', employment).strip().capitalize()
             growing['employment'] = employment
 
         search = re.search('data-qa="vacancy-experience"', str(i))
         if search:
-            growing['experience'] = re.sub('\s+', ' ', i.get_text().strip())
+            growing['experience'] = re.sub(r'\s+', ' ', i.get_text().strip())
 
         search = re.search('data-qa="vacancy-contacts__fio"', str(i))
         if search:
-            growing['contact'] = re.sub('\s+', ' ', i.get_text().strip())
+            growing['contact'] = re.sub(r'\s+', ' ', i.get_text().strip())
 
         search = re.search('data-qa="vacancy-contacts__email"', str(i))
         if search:
-            growing['email'] = re.sub('\s+', ' ', i.get_text().strip())
+            growing['email'] = re.sub(r'\s+', ' ', i.get_text().strip())
 
         search = re.search('data-qa="vacancy-contacts__phone"', str(i))
         if search:
-            if numbers.find(re.sub('\s+', ' ', i.get_text().strip())) == -1:
-                numbers += re.sub('\s+', ' ', i.get_text().strip()) + '\n'
+            if numbers.find(re.sub(r'\s+', ' ', i.get_text().strip())) == -1:
+                numbers += re.sub(r'\s+', ' ', i.get_text().strip()) + '\n'
     if numbers != '':
         growing['numbers'] = numbers[:-1]
     return [growing, pub_link]
@@ -563,8 +557,8 @@ def former(growing, pub_link, background_coefficient):
     keys = post_keys(e_post)
     if growing['title'] != 'none':
         text_to_image = re.sub('/', ' / ', growing['title'])
-        text_to_image = re.sub('\(.*?\)|[—.,]|г\.', '', text_to_image)
-        text_to_image = re.sub('e-mail', 'email', re.sub('\s+', ' ', text_to_image))
+        text_to_image = re.sub(r'\(.*?\)|[—.,]|г\.', '', text_to_image)
+        text_to_image = re.sub('e-mail', 'email', re.sub(r'\s+', ' ', text_to_image))
         if growing['money'] != 'none':
             more = ''
             if growing['money'][1] != 'none':
@@ -578,7 +572,7 @@ def former(growing, pub_link, background_coefficient):
                 money += u' \u0024 '
             else:
                 money += u' \u20BD '
-        growing['tag_picture'] = image(re.sub('[—\s-]', ' ', text_to_image.strip()), money, background_coefficient)
+        growing['tag_picture'] = image(re.sub(r'[—\s-]', ' ', text_to_image.strip()), money, background_coefficient)
         text = growing['tag_picture'] + '👨🏻‍💻 ' + bold(growing['title']) + '\n'
     if growing['experience'] != 'none':
         text += '🏅 Опыт работы ➡ ' + growing['experience'].capitalize() + '\n'
@@ -715,7 +709,7 @@ def repeat_all_messages(message):
     try:
         if message.chat.id in allowed_persons:
             if message.text.startswith('https://'):
-                site_search = re.search('hh\.ru', message.text)
+                site_search = re.search(r'hh\.ru', message.text)
                 if site_search:
                     post = hh_quest(message.text)
                 else:
