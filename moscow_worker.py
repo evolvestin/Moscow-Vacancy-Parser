@@ -3,19 +3,17 @@ import re
 import random
 import _thread
 import gspread
+import objects
 import requests
 from time import sleep
 from telebot import types
 from telegraph import upload
 from bs4 import BeautifulSoup
 from datetime import datetime
-from docs import moscow_vars as docs
 from PIL import Image, ImageFont, ImageDraw
-from objects import thread_exec as executive
-from objects import bold, code, under, query, italic, printer, stamper, \
-    log_time, start_message, start_main_bot, environmental_files
+from objects import bold, code, under, stamper, log_time
 
-stamp1 = int(datetime.now().timestamp())
+stamp1 = objects.time_now()
 allowed_head_elements = ['условия', 'требования']
 starting = ['title', 'place', 'tags', 'geo', 'money', 'org_name', 'schedule', 'employment', 'short_place',
             'experience', 'education', 'contact', 'numbers', 'description', 'email', 'metro', 'tag_picture']
@@ -35,12 +33,13 @@ emoji = {
     '🔋': Image.open('emoji/empty.png')
 }
 e_post = '✉'
+start_link = 10
 idMe = 396978030
-idMain = docs.idMain
-idDocs = docs.idDocs
-environmental_files()
+idMain = -1001261829993
+idDocs = -1001470553483
 data5, client5 = None, None
-idInstagram = docs.idInstagram
+idInstagram = -1001298975823
+objects.environmental_files()
 allowed_persons = [idMe, 470292601, 457209276, 574555477]
 # =================================================================
 
@@ -97,22 +96,23 @@ def google(sheet, action, option):
     return values
 
 
-bot = start_main_bot('non-sync', os.environ['TOKEN'])
+start_search = objects.query('https://t.me/UsefullCWLinks/' + str(start_link), 'd: (.*) :d')
 used_array = google('moscow-growing', 'col_values', 1)
-start_search = query('https://t.me/UsefullCWLinks/' + str(docs.start_link), 'd: (.*) :d')
+Auth = objects.AuthCentre(os.environ['TOKEN'])
+bot = Auth.start_main_bot('non-sync')
+executive = Auth.thread_exec
 if start_search:
     last_date = stamper(start_search.group(1)) - 3 * 60 * 60
-    start_message(os.environ['TOKEN'], stamp1)
+    Auth.start_message(stamp1)
 else:
     last_date = '\nОшибка с нахождением номера поста. ' + bold('Бот выключен')
-    start_message(os.environ['TOKEN'], stamp1, last_date)
+    Auth.start_message(stamp1, last_date)
     _thread.exit()
 # ====================================================================================
 
 
 def hour():
-    stack = int(datetime.now().timestamp())
-    return int(datetime.utcfromtimestamp(int(stack) + 3 * 60 * 60).strftime('%H'))
+    return int(datetime.utcfromtimestamp(objects.time_now() + 3 * 60 * 60).strftime('%H'))
 
 
 def post_keys(em):
@@ -599,7 +599,7 @@ def former(growing, pub_link, background_coefficient):
     text += '\n🔎 ' + pub_link + '\n'
 
     if growing['tags'] != 'none':
-        text += italic('\n💼ТЕГИ: ')
+        text += objects.italic('\n💼ТЕГИ: ')
         for i in growing['tags']:
             text += '#' + i + ' '
         text = text[:-1] + '\n'
@@ -630,7 +630,7 @@ def poster(id_forward, array):
                 start_editing = code('Последний пост на канале Superwork\n') + \
                     bold('d: ') + log_time(last_date + 3 * 60 * 60, code, 0, 'channel') + bold(' :d')
                 try:
-                    bot.edit_message_text(start_editing, -1001471643258, docs.start_link, parse_mode='HTML')
+                    bot.edit_message_text(start_editing, -1001471643258, start_link, parse_mode='HTML')
                 except IndexError and Exception:
                     error = '<b>Проблемы с измением стартового ' \
                             'сообщения на канале @UsefullCWLinks</b>\n\n' + start_editing
@@ -677,7 +677,8 @@ def callbacks(call):
                                 if search_telegraph:
                                     text_list.insert(0, '<a href="' + i.url + '">​​</a>')
                             else:
-                                bot.send_message(idInstagram, '<a href="' + i.url + '">​​</a>️', parse_mode='HTML')
+                                bot.send_message(idInstagram, '<a href="' + i.url + '">​​</a>️',
+                                                 parse_mode='HTML')
                                 bot.send_document(idInstagram, i.url)
                         else:
                             tag = None
@@ -751,7 +752,7 @@ def checker(address, main_sep, link_sep, quest):
             used_array.insert(0, i)
             post = quest(i)
             poster(idDocs, former(post[0], post[1], str(random.randint(1, 2))))
-            printer(i + ' сделано')
+            objects.printer(i + ' сделано')
             sleep(3)
 
 
@@ -763,7 +764,7 @@ def main_posting():
             if len(scheduled) > 0 and (13 <= hour() < 21):
                 if len(scheduled[0]) > 0 and (last_date + 60 * 60) < stamper(log_time(gmt=0, form='channel')):
                     poster(idMain, [scheduled[0], None, None, None])
-                    printer('запостил')
+                    objects.printer('запостил')
                     google('moscow-schedule', 'delete', 1)
         except IndexError and Exception:
             executive()
@@ -780,21 +781,17 @@ def hh_checker():
             executive()
 
 
-def telepol():
+def telegram_polling():
     try:
         bot.polling(none_stop=True, timeout=60)
     except IndexError and Exception:
         bot.stop_polling()
         sleep(1)
-        telepol()
+        telegram_polling()
 
 
 if __name__ == '__main__':
-    gain = []
-    if docs.floater == 1:
-        gain = [hh_checker, main_posting]
-    elif docs.idMain == idMe:
-        gain = [hh_checker, main_posting]
+    gain = [hh_checker, main_posting]
     for thread_element in gain:
         _thread.start_new_thread(thread_element, ())
-    telepol()
+    telegram_polling()
